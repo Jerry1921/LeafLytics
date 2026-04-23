@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaflytics – My Plants</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="dashboard.html" class="nav-brand">🌿 Leaflytics</a>
+  <ul class="nav-links">
+    <li><a href="dashboard.html">Dashboard</a></li>
+    <li><a href="plants.html" class="active">My Plants</a></li>
+    <li><a href="blog.html">Blog</a></li>
+  </ul>
+</nav>
+
+<main class="page-content">
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">My Plants</h1>
+      <p class="page-subtitle">Manage and track every plant in your collection.</p>
+    </div>
+    <a href="plant-form.html" class="btn btn-primary">+ Add Plant</a>
+  </header>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <input class="filter-input" id="searchInput" type="search"
+           placeholder="Search by name or location…" oninput="applyFilter()" />
+    <select class="filter-select" id="typeFilter" onchange="applyFilter()">
+      <option value="">All types</option>
+      <option>Tropical</option>
+      <option>Succulent</option>
+      <option>Cactus</option>
+      <option>Fern</option>
+      <option>Herb</option>
+      <option>Other</option>
+    </select>
+    <select class="filter-select" id="statusFilter" onchange="applyFilter()">
+      <option value="">All statuses</option>
+      <option value="healthy">Healthy</option>
+      <option value="warning">Warning</option>
+      <option value="critical">Critical</option>
+    </select>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper">
+    <table class="plants-table" id="plantsTable">
+      <thead>
+        <tr>
+          <th>Plant</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Last Watered</th>
+          <th>Next Watering</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr><td colspan="7" class="loading-row">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="empty-state hidden" id="emptyState">
+    <div class="empty-icon">🪴</div>
+    <h3>No plants found</h3>
+    <p>Try adjusting your filters, or add a new plant.</p>
+    <a href="plant-form.html" class="btn btn-primary">Add Plant</a>
+  </div>
+
+  <div class="error-state hidden" id="errorState">
+    <p>⚠️ Could not reach the server. Make sure the Spring Boot API is running on port 8080.</p>
+  </div>
+
+</main>
+
+<footer class="footer">© 2025 Leaflytics – keep things green 🌱</footer>
+
+<script src="api.js"></script>
+<script src="utils.js"></script>
+<script>
+let allPlants = [];
+
+(async function init() {
+  try {
+    allPlants = await API.getPlants();
+  } catch (e) {
+    document.getElementById('tableBody').innerHTML = '';
+    showEl('errorState');
+    return;
+  }
+  renderTable(allPlants);
+})();
+
+function applyFilter() {
+  const q      = document.getElementById('searchInput').value.toLowerCase();
+  const type   = document.getElementById('typeFilter').value;
+  const status = document.getElementById('statusFilter').value;
+
+  const filtered = allPlants.filter(p => {
+    const matchQ = !q || (p.name || '').toLowerCase().includes(q) ||
+                         (p.location || '').toLowerCase().includes(q);
+    const matchT = !type   || (p.type || '') === type;
+    const matchS = !status || getHealthStatus(p) === status;
+    return matchQ && matchT && matchS;
+  });
+
+  renderTable(filtered);
+}
+
+function renderTable(plants) {
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+
+  if (plants.length === 0) {
+    tbody.innerHTML = '';
+    showEl('emptyState');
+    return;
+  }
+  hideEl('emptyState');
+
+  tbody.innerHTML = plants.map(p => {
+    const s    = getHealthStatus(p);
+    const lbl  = getWaterLabel(p);
+    const next = getNextWateringDate(p);
+    return `
+      <tr>
+        <td>
+          <span class="table-plant-icon">${plantEmoji(p.type)}</span>
+          <strong>${esc(p.name)}</strong>
+        </td>
+        <td>${esc(p.type || '–')}</td>
+        <td>${esc(p.location || '–')}</td>
+        <td>${formatDate(p.lastWateredDate)}</td>
+        <td>${next}</td>
+        <td><span class="status-badge status-badge--${s}">${s}</span></td>
+        <td class="action-cell">
+          <a href="plant-form.html?id=${p.id}" class="btn btn-sm">Edit</a>
+          <button class="btn btn-sm btn-danger" onclick="del(${p.id}, this)">Delete</button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+async function del(id, btn) {
+  if (!confirm('Delete this plant?')) return;
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    await API.deletePlant(id);
+    allPlants = allPlants.filter(p => p.id !== id);
+    applyFilter();
+  } catch(e) {
+    alert('Could not delete. Is the API running?');
+    btn.disabled = false;
+    btn.textContent = 'Delete';
+  }
+}
+</script>
+</body>
+</html>

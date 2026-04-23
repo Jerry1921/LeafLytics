@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaflytics – Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ── Navigation ──────────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <a href="dashboard.html" class="nav-brand">🌿 Leaflytics</a>
+  <ul class="nav-links">
+    <li><a href="dashboard.html" class="active">Dashboard</a></li>
+    <li><a href="plants.html">My Plants</a></li>
+    <li><a href="blog.html">Blog</a></li>
+  </ul>
+</nav>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<main class="page-content">
+
+  <!-- Header -->
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Good morning 🌤️</h1>
+      <p class="page-subtitle">Here's how your plants are doing today.</p>
+    </div>
+    <a href="plant-form.html" class="btn btn-primary">+ Add Plant</a>
+  </header>
+
+  <!-- Summary pills -->
+  <section class="summary-row" id="summaryRow">
+    <div class="summary-pill summary-pill--healthy">
+      <span class="pill-count" id="countHealthy">–</span>
+      <span class="pill-label">Healthy</span>
+    </div>
+    <div class="summary-pill summary-pill--warning">
+      <span class="pill-count" id="countWarning">–</span>
+      <span class="pill-label">Warning</span>
+    </div>
+    <div class="summary-pill summary-pill--critical">
+      <span class="pill-count" id="countCritical">–</span>
+      <span class="pill-label">Critical</span>
+    </div>
+    <div class="summary-pill summary-pill--total">
+      <span class="pill-count" id="countTotal">–</span>
+      <span class="pill-label">Total Plants</span>
+    </div>
+  </section>
+
+  <!-- Reminders banner -->
+  <section class="reminders-section" id="remindersSection" style="display:none">
+    <h2 class="section-title">⏰ Reminders</h2>
+    <div class="reminder-list" id="reminderList"></div>
+  </section>
+
+  <!-- Plant cards grid -->
+  <section>
+    <h2 class="section-title">All Plants</h2>
+
+    <!-- Loading skeleton -->
+    <div class="card-grid" id="loadingGrid">
+      <div class="plant-card skeleton"></div>
+      <div class="plant-card skeleton"></div>
+      <div class="plant-card skeleton"></div>
+    </div>
+
+    <!-- Real cards injected here -->
+    <div class="card-grid hidden" id="plantGrid"></div>
+
+    <!-- Empty state -->
+    <div class="empty-state hidden" id="emptyState">
+      <div class="empty-icon">🪴</div>
+      <h3>No plants yet</h3>
+      <p>Add your first plant and Leaflytics will help you keep it alive.</p>
+      <a href="plant-form.html" class="btn btn-primary">Add Your First Plant</a>
+    </div>
+
+    <!-- Error state -->
+    <div class="error-state hidden" id="errorState">
+      <p>⚠️ Could not reach the server. Make sure the Spring Boot API is running on port 8080.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">© 2025 Leaflytics – keep things green 🌱</footer>
+
+<script src="api.js"></script>
+<script src="utils.js"></script>
+<script>
+// ── Dashboard page logic ─────────────────────────────────────────────────────
+
+(async function init() {
+
+  let plants = [];
+  try {
+    plants = await API.getPlants();
+  } catch (e) {
+    showEl('errorState');
+    hideEl('loadingGrid');
+    return;
+  }
+
+  hideEl('loadingGrid');
+
+  if (plants.length === 0) {
+    showEl('emptyState');
+    updateSummary([]);
+    return;
+  }
+
+  showEl('plantGrid');
+  updateSummary(plants);
+  renderCards(plants);
+  renderReminders(plants);
+})();
+
+// ── Summary pills ─────────────────────────────────────────────────────────────
+function updateSummary(plants) {
+  let h = 0, w = 0, c = 0;
+  plants.forEach(p => {
+    const s = getHealthStatus(p);
+    if (s === 'healthy') h++;
+    else if (s === 'warning') w++;
+    else c++;
+  });
+  setText('countHealthy', h);
+  setText('countWarning',  w);
+  setText('countCritical', c);
+  setText('countTotal',    plants.length);
+}
+
+// ── Render plant cards ────────────────────────────────────────────────────────
+function renderCards(plants) {
+  const grid = document.getElementById('plantGrid');
+  grid.innerHTML = '';
+
+  plants.forEach(plant => {
+    const status   = getHealthStatus(plant);
+    const nextDate = getNextWateringDate(plant);
+    const label    = getWaterLabel(plant);
+
+    const card = document.createElement('div');
+    card.className = `plant-card plant-card--${status}`;
+    card.innerHTML = `
+      <div class="card-status-bar"></div>
+      <div class="card-body">
+        <div class="card-top">
+          <span class="plant-emoji">${plantEmoji(plant.type)}</span>
+          <span class="status-badge status-badge--${status}">${status}</span>
+        </div>
+        <h3 class="plant-name">${esc(plant.name)}</h3>
+        <p class="plant-meta">${esc(plant.type || '–')} &middot; ${esc(plant.location || '–')}</p>
+
+        <div class="care-info">
+          <div class="care-row">
+            <span class="care-icon">💧</span>
+            <span class="care-label">Last watered</span>
+            <span class="care-val">${formatDate(plant.lastWateredDate)}</span>
+          </div>
+          <div class="care-row">
+            <span class="care-icon">📅</span>
+            <span class="care-label">Next watering</span>
+            <span class="care-val">${nextDate}</span>
+          </div>
+          <div class="care-row">
+            <span class="care-icon">🌱</span>
+            <span class="care-label">Last fertilized</span>
+            <span class="care-val">${formatDate(plant.lastFertilizedDate)}</span>
+          </div>
+        </div>
+
+        <div class="water-label water-label--${status}">${label}</div>
+      </div>
+      <div class="card-footer">
+        <a href="plant-form.html?id=${plant.id}" class="btn btn-sm">Edit</a>
+        <button class="btn btn-sm btn-danger" onclick="deletePlant(${plant.id}, this)">Delete</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ── Reminders banner ──────────────────────────────────────────────────────────
+function renderReminders(plants) {
+  const urgent = plants.filter(p => {
+    const s = getHealthStatus(p);
+    return s === 'critical' || s === 'warning';
+  });
+
+  if (urgent.length === 0) return;
+
+  showEl('remindersSection');
+  const list = document.getElementById('reminderList');
+  list.innerHTML = '';
+
+  urgent.forEach(p => {
+    const s   = getHealthStatus(p);
+    const lbl = getWaterLabel(p);
+    const div = document.createElement('div');
+    div.className = `reminder-item reminder-item--${s}`;
+    div.innerHTML = `
+      <span class="reminder-emoji">${plantEmoji(p.type)}</span>
+      <span class="reminder-text"><strong>${esc(p.name)}</strong> – ${lbl}</span>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ── Delete handler ────────────────────────────────────────────────────────────
+async function deletePlant(id, btn) {
+  if (!confirm('Delete this plant? This cannot be undone.')) return;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    await API.deletePlant(id);
+    // Re-init page
+    location.reload();
+  } catch (e) {
+    alert('Could not delete plant. Is the API running?');
+    btn.textContent = 'Delete';
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

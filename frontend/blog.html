@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaflytics – Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="dashboard.html" class="nav-brand">🌿 Leaflytics</a>
+  <ul class="nav-links">
+    <li><a href="dashboard.html">Dashboard</a></li>
+    <li><a href="plants.html">My Plants</a></li>
+    <li><a href="blog.html" class="active">Blog</a></li>
+  </ul>
+</nav>
+
+<main class="page-content">
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Plant Care Blog</h1>
+      <p class="page-subtitle">Tips, guides, and seasonal advice for indoor gardeners.</p>
+    </div>
+    <a href="blog-form.html" class="btn btn-primary">+ New Post</a>
+  </header>
+
+  <!-- Posts loading skeleton -->
+  <div id="loadingSkeleton">
+    <div class="blog-card skeleton" style="height:140px;margin-bottom:16px;"></div>
+    <div class="blog-card skeleton" style="height:140px;margin-bottom:16px;"></div>
+  </div>
+
+  <!-- Posts list -->
+  <div id="postList"></div>
+
+  <div class="empty-state hidden" id="emptyState">
+    <div class="empty-icon">📝</div>
+    <h3>No posts yet</h3>
+    <p>Be the first to share a plant care tip.</p>
+    <a href="blog-form.html" class="btn btn-primary">Write a Post</a>
+  </div>
+
+  <div class="error-state hidden" id="errorState">
+    <p>⚠️ Could not reach the server. Make sure the Spring Boot API is running on port 8080.</p>
+  </div>
+
+</main>
+
+<footer class="footer">© 2025 Leaflytics – keep things green 🌱</footer>
+
+<script src="api.js"></script>
+<script src="utils.js"></script>
+<script>
+(async function init() {
+  let posts = [];
+  try {
+    posts = await API.getBlogs();
+  } catch (e) {
+    hideEl('loadingSkeleton');
+    showEl('errorState');
+    return;
+  }
+
+  hideEl('loadingSkeleton');
+
+  if (posts.length === 0) {
+    showEl('emptyState');
+    return;
+  }
+
+  const list = document.getElementById('postList');
+  list.innerHTML = posts.map(p => `
+    <article class="blog-card">
+      <div class="blog-card-body">
+        <time class="blog-date">${formatDateTime(p.createdAt)}</time>
+        <h2 class="blog-title">
+          <a href="blog-post.html?id=${p.id}">${esc(p.title)}</a>
+        </h2>
+        <p class="blog-excerpt">${esc(p.excerpt || '')}</p>
+        <div class="blog-footer">
+          <a href="blog-post.html?id=${p.id}" class="btn btn-ghost btn-sm">Read more →</a>
+          <button class="btn btn-sm btn-danger" onclick="deletePost(${p.id}, this)">Delete</button>
+        </div>
+      </div>
+    </article>
+  `).join('');
+})();
+
+async function deletePost(id, btn) {
+  if (!confirm('Delete this post? This cannot be undone.')) return;
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    await API.deleteBlog(id);
+    location.reload();
+  } catch(e) {
+    alert('Could not delete post.');
+    btn.disabled = false;
+    btn.textContent = 'Delete';
+  }
+}
+</script>
+</body>
+</html>

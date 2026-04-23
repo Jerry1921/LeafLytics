@@ -1,0 +1,13 @@
+com\leaflytics\service\BlogPostService.class
+com\leaflytics\controller\PlantController.class
+com\leaflytics\repository\BlogPostRepository.class
+com\leaflytics\controller\BlogPostController.class
+com\leaflytics\entity\Plant.class
+com\leaflytics\config\CorsConfig$1.class
+com\leaflytics\entity\BlogPost.class
+com\leaflytics\entity\BlogPost$BlogPostBuilder.class
+com\leaflytics\entity\Plant$PlantBuilder.class
+com\leaflytics\repository\PlantRepository.class
+com\leaflytics\LeaflyticsApplication.class
+com\leaflytics\service\PlantService.class
+com\leaflytics\config\CorsConfig.class

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaflytics – Add / Edit Plant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="dashboard.html" class="nav-brand">🌿 Leaflytics</a>
+  <ul class="nav-links">
+    <li><a href="dashboard.html">Dashboard</a></li>
+    <li><a href="plants.html">My Plants</a></li>
+    <li><a href="blog.html">Blog</a></li>
+  </ul>
+</nav>
+
+<main class="page-content page-content--narrow">
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-title" id="formTitle">Add New Plant</h1>
+      <p class="page-subtitle">Fill in the details below and save.</p>
+    </div>
+    <a href="plants.html" class="btn btn-ghost">← Back</a>
+  </header>
+
+  <div class="form-card">
+
+    <!-- Success / error alerts -->
+    <div class="alert alert-success hidden" id="alertSuccess">✅ Plant saved successfully!</div>
+    <div class="alert alert-error   hidden" id="alertError">⚠️ Something went wrong. Please try again.</div>
+
+    <form id="plantForm" novalidate>
+
+      <!-- Row 1: name + type -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="name">Plant Name <span class="required">*</span></label>
+          <input class="form-input" id="name" type="text"
+                 placeholder="e.g. Monstera Deliciosa" required />
+          <span class="form-error" id="nameError"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="type">Plant Type</label>
+          <select class="form-input form-select" id="type">
+            <option value="">– select type –</option>
+            <option>Tropical</option>
+            <option>Succulent</option>
+            <option>Cactus</option>
+            <option>Fern</option>
+            <option>Herb</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Row 2: location + watering interval -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="location">Location</label>
+          <input class="form-input" id="location" type="text"
+                 placeholder="e.g. Living Room, Balcony" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="wateringIntervalDays">
+            Watering every (days)
+          </label>
+          <input class="form-input" id="wateringIntervalDays" type="number"
+                 min="1" max="90" value="7" />
+          <small class="form-hint">How many days between waterings.</small>
+        </div>
+      </div>
+
+      <!-- Row 3: care dates -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="lastWateredDate">Last Watered</label>
+          <input class="form-input" id="lastWateredDate" type="date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="lastFertilizedDate">Last Fertilized</label>
+          <input class="form-input" id="lastFertilizedDate" type="date" />
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-group">
+        <label class="form-label" for="notes">Notes</label>
+        <textarea class="form-input form-textarea" id="notes"
+                  rows="4" placeholder="Any special care instructions, observations…"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <a href="plants.html" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Save Plant</button>
+      </div>
+
+    </form>
+
+  </div>
+</main>
+
+<footer class="footer">© 2025 Leaflytics – keep things green 🌱</footer>
+
+<script src="api.js"></script>
+<script src="utils.js"></script>
+<script>
+// ── Determine if we are editing an existing plant ─────────────────────────────
+const params  = new URLSearchParams(location.search);
+const plantId = params.get('id') ? Number(params.get('id')) : null;
+
+if (plantId) {
+  document.getElementById('formTitle').textContent = 'Edit Plant';
+  // Load existing data into the form
+  (async () => {
+    try {
+      const plant = await API.getPlant(plantId);
+      document.getElementById('name').value = plant.name || '';
+      document.getElementById('type').value = plant.type || '';
+      document.getElementById('location').value = plant.location || '';
+      document.getElementById('notes').value = plant.notes || '';
+      document.getElementById('wateringIntervalDays').value = plant.wateringIntervalDays || 7;
+      document.getElementById('lastWateredDate').value    = plant.lastWateredDate    || '';
+      document.getElementById('lastFertilizedDate').value = plant.lastFertilizedDate || '';
+    } catch (e) {
+      showAlert('alertError', 'Could not load plant data.');
+    }
+  })();
+}
+
+// ── Form submit ───────────────────────────────────────────────────────────────
+document.getElementById('plantForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  // Basic validation
+  const nameVal = document.getElementById('name').value.trim();
+  if (!nameVal) {
+    document.getElementById('nameError').textContent = 'Plant name is required.';
+    document.getElementById('name').focus();
+    return;
+  }
+  document.getElementById('nameError').textContent = '';
+
+  const payload = {
+    name:                 nameVal,
+    type:                 document.getElementById('type').value || null,
+    location:             document.getElementById('location').value.trim() || null,
+    notes:                document.getElementById('notes').value.trim() || null,
+    wateringIntervalDays: parseInt(document.getElementById('wateringIntervalDays').value) || 7,
+    lastWateredDate:      document.getElementById('lastWateredDate').value    || null,
+    lastFertilizedDate:   document.getElementById('lastFertilizedDate').value || null,
+  };
+
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  try {
+    if (plantId) {
+      await API.updatePlant(plantId, payload);
+    } else {
+      await API.createPlant(payload);
+    }
+    showAlert('alertSuccess');
+    // Redirect to plant list after brief pause
+    setTimeout(() => { location.href = 'plants.html'; }, 800);
+  } catch (err) {
+    showAlert('alertError', err.message || 'Could not save plant.');
+    btn.textContent = 'Save Plant';
+    btn.disabled = false;
+  }
+});
+
+// Auto-set watering interval when type changes
+document.getElementById('type').addEventListener('change', function () {
+  const defaults = { Succulent: 14, Cactus: 14, Fern: 4, Herb: 3, Tropical: 5 };
+  const v = defaults[this.value];
+  if (v) document.getElementById('wateringIntervalDays').value = v;
+});
+
+// Helper
+function showAlert(id, msg) {
+  ['alertSuccess','alertError'].forEach(i => hideEl(i));
+  const el = document.getElementById(id);
+  if (msg) el.textContent = (id === 'alertError' ? '⚠️ ' : '✅ ') + msg;
+  showEl(id);
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+</body>
+</html>

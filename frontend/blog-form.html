@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaflytics – New Blog Post</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="dashboard.html" class="nav-brand">🌿 Leaflytics</a>
+  <ul class="nav-links">
+    <li><a href="dashboard.html">Dashboard</a></li>
+    <li><a href="plants.html">My Plants</a></li>
+    <li><a href="blog.html" class="active">Blog</a></li>
+  </ul>
+</nav>
+
+<main class="page-content page-content--narrow">
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">New Blog Post</h1>
+      <p class="page-subtitle">Share plant care knowledge with the community.</p>
+    </div>
+    <a href="blog.html" class="btn btn-ghost">← Back</a>
+  </header>
+
+  <div class="form-card">
+
+    <div class="alert alert-success hidden" id="alertSuccess">✅ Post published!</div>
+    <div class="alert alert-error   hidden" id="alertError">⚠️ Something went wrong.</div>
+
+    <form id="blogForm" novalidate>
+
+      <div class="form-group">
+        <label class="form-label" for="title">Title <span class="required">*</span></label>
+        <input class="form-input" id="title" type="text"
+               placeholder="e.g. How to Revive an Overwatered Plant" required />
+        <span class="form-error" id="titleError"></span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="excerpt">Short excerpt <small>(optional – auto-generated if blank)</small></label>
+        <input class="form-input" id="excerpt" type="text"
+               placeholder="A one-sentence teaser shown on the blog list…" maxlength="400" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="content">
+          Content <span class="required">*</span>
+          <small style="font-weight:400;margin-left:8px;">Use **word** for bold, blank line for new paragraph</small>
+        </label>
+        <textarea class="form-input form-textarea" id="content"
+                  rows="14" placeholder="Write your post here…" required></textarea>
+        <span class="form-error" id="contentError"></span>
+      </div>
+
+      <div class="form-actions">
+        <a href="blog.html" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Publish Post</button>
+      </div>
+
+    </form>
+  </div>
+</main>
+
+<footer class="footer">© 2025 Leaflytics – keep things green 🌱</footer>
+
+<script src="api.js"></script>
+<script src="utils.js"></script>
+<script>
+document.getElementById('blogForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  // Validate
+  let ok = true;
+  const title   = document.getElementById('title').value.trim();
+  const content = document.getElementById('content').value.trim();
+
+  if (!title) {
+    document.getElementById('titleError').textContent = 'Title is required.';
+    ok = false;
+  } else {
+    document.getElementById('titleError').textContent = '';
+  }
+
+  if (!content) {
+    document.getElementById('contentError').textContent = 'Content is required.';
+    ok = false;
+  } else {
+    document.getElementById('contentError').textContent = '';
+  }
+
+  if (!ok) return;
+
+  const payload = {
+    title,
+    content,
+    excerpt: document.getElementById('excerpt').value.trim() || null,
+  };
+
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = 'Publishing…';
+  btn.disabled = true;
+
+  try {
+    await API.createBlog(payload);
+    showEl('alertSuccess');
+    setTimeout(() => { location.href = 'blog.html'; }, 800);
+  } catch (err) {
+    document.getElementById('alertError').textContent =
+      '⚠️ ' + (err.message || 'Could not publish post.');
+    showEl('alertError');
+    btn.textContent = 'Publish Post';
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
