@@ -1,19 +1,19 @@
-# 🌿 Leaflytics — Indoor Plant Care Tracker
+# Leaflytics — Indoor Plant Care Tracker
 
 Leaflytics is a simple full-stack web application designed to help users manage and monitor indoor plant care efficiently. It allows users to track watering schedules, monitor plant health, and read plant care blogs — all in one place.
 
 ---
 
-## 🚀 Live Demo
+## Live Demo
 
 * 🌐 Frontend: https://your-frontend.vercel.app
 * ⚙️ Backend API: https://your-backend.onrender.com
 
 ---
 
-## 📌 Features
+## Features
 
-### 🌱 Plant Management
+### Plant Management
 
 * Add new plants with details (name, type, location, notes)
 * View all plants in a clean dashboard
@@ -58,7 +58,7 @@ Leaflytics is a simple full-stack web application designed to help users manage 
 
 ---
 
-## 🧩 Tech Stack
+## Tech Stack
 
 ### Frontend
 
@@ -78,7 +78,7 @@ Leaflytics is a simple full-stack web application designed to help users manage 
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 leaflytics/
@@ -163,7 +163,7 @@ http://localhost:8080
 
 ---
 
-## 🌐 Frontend Setup
+## Frontend Setup
 
 ### 1. Navigate to frontend
 
@@ -201,7 +201,7 @@ GET    /api/blogs/{id}
 
 ---
 
-## 🧪 Sample Data
+## Sample Data
 
 ### Example Plant JSON
 
@@ -216,72 +216,8 @@ GET    /api/blogs/{id}
 }
 ```
 
----
 
-## 🚀 Deployment Guide
-
-### ⚠️ Important
-
-Vercel does NOT support Spring Boot backend directly.
-
----
-
-### ✅ Recommended Deployment
-
-| Layer    | Platform                      |
-| -------- | ----------------------------- |
-| Frontend | Vercel                        |
-| Backend  | Render / Railway              |
-| Database | MySQL (Railway / PlanetScale) |
-
----
-
-### 🔹 Deploy Backend (Render)
-
-1. Push backend to GitHub
-2. Create a new Web Service on Render
-3. Configure:
-
-```
-Build Command: mvn clean install
-Start Command: java -jar target/*.jar
-```
-
-4. Add environment variables for DB
-
----
-
-### 🔹 Deploy Frontend (Vercel)
-
-1. Push frontend to GitHub
-2. Import project in Vercel
-3. Set root directory:
-
-```
-frontend/
-```
-
----
-
-### 🔹 Update API URL in frontend
-
-```
-const BASE_URL = "https://your-backend-url.onrender.com/api";
-```
-
----
-
-## 🧠 Key Learnings
-
-* REST API development with Spring Boot
-* CRUD operations using MySQL
-* Frontend-backend integration using Fetch API
-* Clean UI design with vanilla CSS
-* Deployment of full-stack applications
-
----
-
-## 📌 Future Improvements
+## Future Improvements
 
 * User authentication (JWT)
 * Email reminders for watering
@@ -290,7 +226,7 @@ const BASE_URL = "https://your-backend-url.onrender.com/api";
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 **Jerry Jeriomio Joydhor**
 
