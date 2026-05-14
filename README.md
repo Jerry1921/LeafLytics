@@ -6,8 +6,8 @@ Leaflytics is a simple full-stack web application designed to help users manage 
 
 ## Live Demo
 
-* 🌐 Frontend: https://your-frontend.vercel.app
-* ⚙️ Backend API: https://your-backend.onrender.com
+* 🌐 Frontend: working on it 
+* ⚙️ Backend API: working on it
 
 ---
 
